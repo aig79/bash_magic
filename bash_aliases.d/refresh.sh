@@ -1,1 +1,1 @@
-alias refresh=". $HOME/src/bash_magic/bashrc"
+alias refresh=". $HOME/.bashrc"
