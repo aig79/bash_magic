@@ -1,20 +1,73 @@
-#!/usr/bin/env bash
-
+#!/bin/bash
+#
+# works on cygwin and OS X 10.4
+#
 action=$1
+
+# now shift the positional parameters to the right, past
+# the plug-in action, so that they can be pasted to the
+# built-in actions.
+#
 shift
 
-function usage() {
-	echo "  $(basename $0) [item]"
-	echo "    Edit item(s) using text editor."
-	echo ""
-	exit
+[ "$action" = "usage" ] && [[ "$1" == "version" ]] && {
+    sed -e 's/^    //' <<EndVersion
+      edit Add-on, version 1.0.2.
+
+        First release: 9-APR-2009
+        Author: Dave Hein
+        License: GPL, http://www.gnu.org/copyleft/gpl.html
+EndVersion
+    exit
 }
 
-[ "$action" = "usage" ] && usage
+[ "$action" = "usage" ] && [[ "$1" == "short" ]] && {
+    sed -e 's/^    //' <<EndUsage
+      edit [todo|done|cfg]
+EndUsage
+  exit
+}
 
-cmd=${EDITOR:-vi}
-if [[ "$1" =~ ^[0-9]+$ ]]; then
-	cmd="$cmd +$1"
+[ "$action" = "usage" ] && {
+    sed -e 's/^    //' <<EndUsage
+      edit [todo|done|cfg]
+      edit [item]
+        Edits either the todo.txt, done.txt, or
+        todo.cfg files. If no arg is supplied, todo.txt
+        will be edited. If a numeric item number is
+        supplied, the todo.txt is edited, with the cursor
+        sitting on that line (assuming you use vi or emacs). 
+        The editor invoked uses the EDITOR environment
+        variable, or defaults to vi.
+EndUsage
+  exit
+}
+
+# see if an editor was supplied
+#
+TODOTXT_EDITOR_=${EDITOR:-vi}
+
+# see which file, if any was specified
+#
+TODOTXT_CURSOR_LINE_=
+if [ x"$1" == x ] ; then
+  TODOTXT_EDIT_FILE_="$TODO_FILE"
+elif echo "$1" | grep -iq ^[0-9][0-9]*$ ; then
+  TODOTXT_EDIT_FILE_="$TODO_FILE"
+  TODOTXT_CURSOR_LINE_="+$1"
+elif echo "$1" | grep -iq ^todo$ ; then
+  TODOTXT_EDIT_FILE_="$TODO_FILE"
+elif echo "$1" | grep -iq ^done$ ; then
+  TODOTXT_EDIT_FILE_="$DONE_FILE"
+elif echo "$1" | grep -iq ^cfg$ ; then
+  TODOTXT_EDIT_FILE_="$TODOTXT_CFG_FILE"
+else
+  echo "'$1' is an invalid argument."
+  exit
 fi
 
-$cmd "$TODO_FILE"
+# edit the file
+#
+#echo "$TODOTXT_EDITOR_" $TODOTXT_CURSOR_LINE_ "$TODOTXT_EDIT_FILE_"
+"$TODOTXT_EDITOR_" $TODOTXT_CURSOR_LINE_ "$TODOTXT_EDIT_FILE_"
+exit
